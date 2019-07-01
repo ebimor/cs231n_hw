@@ -76,8 +76,10 @@ class KNearestNeighbor(object):
                 # not use a loop over dimension, nor use np.linalg.norm().          #
                 #####################################################################
                 # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+                e = self.X_train[j,:] - X[i,:];
+                dists[i,j] = np.dot(e, np.transpose(e))
 
-                pass
+                #pass
 
                 # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
@@ -101,7 +103,9 @@ class KNearestNeighbor(object):
             #######################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            e = self.X_train - X[i, :]
+            dists[i, :] = np.sum(e**2, axis=1)
+            #pass
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
@@ -131,7 +135,16 @@ class KNearestNeighbor(object):
         #########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        dists = np.sum(self.X_train**2, axis=1) + np.sum(X**2, axis=1)[:, np.newaxis] - 2 * np.dot(X, self.X_train.T)
+
+        return dists
+
+
+
+        #pass
+
+
+
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         return dists
@@ -164,7 +177,10 @@ class KNearestNeighbor(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            #pass
+
+            index = np.argsort(dists[i,:])
+            closest_y = self.y_train[index[0:k]]
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
             #########################################################################
@@ -175,9 +191,15 @@ class KNearestNeighbor(object):
             # label.                                                                #
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+            m = np.max(self.y_train)
+            pred =np.zeros(m+1)
+            for j in range(k):
+            	pred[closest_y[j]] += 1
 
-            pass
+            y_pred[i] = np.argmax(pred)
 
-            # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
+            #pass
+
+            # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****i]
 
         return y_pred
