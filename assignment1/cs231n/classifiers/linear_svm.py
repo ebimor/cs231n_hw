@@ -84,7 +84,12 @@ def svm_loss_vectorized(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    Scores = np.matmul(X,W) #result is a N by C array
+    Sy_i = Scores[range(X.shape[0]),y] # N by 1 matrix
+    L = np.maximum((Scores.T - Sy_i+1).T,0)
+    loss = np.sum(np.sum(L,axis=1), axis=0)/X.shape[0] - 1 + 2 * reg * np.sum(W * W)
+
+    #pass
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
