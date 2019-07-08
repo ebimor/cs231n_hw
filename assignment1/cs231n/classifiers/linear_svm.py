@@ -38,7 +38,7 @@ def svm_loss_naive(W, X, y, reg):
             if margin > 0:
                 loss += margin
                 dW[:,j] += X[i].T
-                dW[:,y[i]] -= X[i] 
+                dW[:,y[i]] -= X[i].T
 
 
     # Right now the loss is a sum over all training examples, but we want it
@@ -86,8 +86,15 @@ def svm_loss_vectorized(W, X, y, reg):
 
     Scores = np.matmul(X,W) #result is a N by C array
     Sy_i = Scores[range(X.shape[0]),y] # N by 1 matrix
-    L = np.maximum((Scores.T - Sy_i+1).T,0)
-    loss = np.sum(np.sum(L,axis=1), axis=0)/X.shape[0] - 1 + 2 * reg * np.sum(W * W)
+    L = np.maximum((Scores.T - Sy_i+1).T,0) #L is N by C
+    L[range(X.shape[0]),y] = 0
+    loss = np.sum(np.sum(L,axis=1), axis=0)/X.shape[0] + 2 * reg * np.sum(W * W)
+
+    L[L > 0] = 1
+    P = np.zeros(L.shape)
+    P[range(P.shape[0]), y] = np.sum(L,axis=1)
+    L = L - P
+    dW = np.matmul(X.T, L) / X.shape[0] + 2*reg*W
 
     #pass
 
