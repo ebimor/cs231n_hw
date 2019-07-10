@@ -78,7 +78,15 @@ def softmax_loss_vectorized(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    Scores = np.matmul(X,W) #result is a N by C array
+    Sy_i = Scores[range(X.shape[0]),y] # N by 1 matrix
+    L = np.exp(Sy_i)/np.sum(np.exp(Scores), axis=1) #N by 1 matrix
+    loss = np.sum(-np.log(L))/X.shape[0] + 2 * reg * np.sum(W * W)
+
+
+    Q = np.exp(Scores)/np.sum(np.exp(Scores), axis=1).reshape(X.shape[0],-1)
+    Q[range(X.shape[0]), y] -= 1
+    dW = np.matmul(X.T, Q) / X.shape[0] + 2*reg*W
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
