@@ -80,7 +80,13 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        S1 = np.matmul(X,W1)+b1.T # N by H
+        S = np.maximum(S1,0)
+        scores = np.matmul(S,W2)+b2.T # N by C
+
+
+
+        #pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -98,7 +104,11 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        Sy_i = scores[range(X.shape[0]),y] # N by 1 matrix
+        L = np.exp(Sy_i)/np.sum(np.exp(scores), axis=1) #N by 1 matrix
+        loss = np.sum(-np.log(L))/X.shape[0] + reg * np.sum(W1 * W1) + reg * np.sum(W2 * W2)
+
+        #pass
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -111,7 +121,30 @@ class TwoLayerNet(object):
         #############################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        dL_dscores = np.exp(scores)/np.sum(np.exp(scores), axis=1, keepdims=True) #N by 1 matrix
+        dL_dscores[range(X.shape[0]),y] -= 1
+        dL_dscores = dL_dscores/X.shape[0]  #N by C
+
+        dR_dW1 = reg*W1
+        dR_dW2 = reg*W2
+
+        dscores_dW2 = S.T  #N by H
+        dscores_db2 = np.ones((1,scores.shape[0]))
+        dscores_dS = W2.T
+
+
+        grads['W2'] = np.matmul(dscores_dW2, dL_dscores) + 2*dR_dW2
+        grads['b2'] = np.matmul(dscores_db2, dL_dscores).reshape(b2.shape)
+
+        dL_dS = np.matmul(dL_dscores, dscores_dS) #shape of S which is N by H
+        dL_dS1 = dL_dS.copy()
+        dL_dS1[S1<0] = 0
+
+        dS1_dW1 = X.T
+        dS1_db1 = np.ones((1,S1.shape[0]))
+
+        grads['W1'] = np.matmul(dS1_dW1, dL_dS1)+2*dR_dW1 #shoud be of size W1
+        grads['b1'] = np.matmul(dS1_db1, dL_dS1).reshape(b1.shape)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -139,6 +172,8 @@ class TwoLayerNet(object):
         - verbose: boolean; if true print progress during optimization.
         """
         num_train = X.shape[0]
+        batch_size = min(batch_size, num_train) #batchsize cannot be larger than number of training samples
+
         iterations_per_epoch = max(num_train / batch_size, 1)
 
         # Use SGD to optimize the parameters in self.model
@@ -156,7 +191,9 @@ class TwoLayerNet(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+            idx = np.random.choice(np.arange(num_train), batch_size, replace=False)
+            X_batch = X[idx]
+            y_batch = y[idx]
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -172,7 +209,13 @@ class TwoLayerNet(object):
             #########################################################################
             # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            pass
+
+            self.params['W1'] += - learning_rate * grads['W1']
+            self.params['b1'] += - learning_rate * grads['b1']
+            self.params['W2'] += - learning_rate * grads['W2'] 
+            self.params['b2'] += - learning_rate * grads['b2'] 
+
+
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -218,7 +261,14 @@ class TwoLayerNet(object):
         ###########################################################################
         # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-        pass
+        W1, b1 = self.params['W1'], self.params['b1']
+        W2, b2 = self.params['W2'], self.params['b2']
+        S1 = np.matmul(X,W1)+b1.T 
+        S = np.maximum(S1,0)
+        scores = np.matmul(S,W2)+b2.T #N by C dimension
+
+        y_pred = np.argmax(scores, axis = 1)
+
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
