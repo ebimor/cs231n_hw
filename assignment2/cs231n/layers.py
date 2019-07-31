@@ -66,7 +66,7 @@ def affine_backward(dout, cache):
     r = x.reshape(x.shape[0],-1)
 
     dw = np.matmul(r.T, dout)
-    db = np.matmul(np.ones((1,x.shape[0])), dout)
+    db = np.matmul(np.ones((1,x.shape[0])), dout).reshape(b.shape)
     dx = np.matmul(dout, w.T).reshape(x.shape)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****

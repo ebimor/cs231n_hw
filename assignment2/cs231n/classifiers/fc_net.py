@@ -127,6 +127,7 @@ class TwoLayerNet(object):
         _, grads['W1'], grads['b1'] = affine_relu_backward(dout, cache1)
         grads['W1'] += self.reg*self.params['W1']
 
+
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
         #                             END OF YOUR CODE                             #
