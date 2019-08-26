@@ -212,7 +212,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         running_mean = momentum * running_mean + (1 - momentum) * sample_mean
         running_var = momentum * running_var + (1 - momentum) * sample_var
 
-        cache = (x, gamma, beta)
+        cache = (x, gamma, beta, bn_param, sample_mean, sample_var)
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         #######################################################################
@@ -270,7 +270,32 @@ def batchnorm_backward(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    #pass
+
+    x, gamma, beta, bn_param, sample_mean, sample_var = cache
+    xmu = x-sample_mean
+    eps = bn_param.get('eps', 1e-5)
+    sqrtvar = np.sqrt(sample_var+eps)
+    ivar = 1/sqrtvar
+
+
+    dxhat = dout*gamma
+    divar = np.sum(dxhat*xmu, axis=0)
+    dxmu1 = dxhat*ivar
+    dsqrtvar = -1/(sample_var+eps)*divar	
+    dvar = 0.5 * 1. /np.sqrt(sample_var+eps) * dsqrtvar
+    dsq = 1. /x.shape[0] * np.ones(x.shape) * dvar
+    dxmu2 = 2 * xmu * dsq
+    dx1 = (dxmu1 + dxmu2)
+    dmu = -1 * np.sum(dxmu1+dxmu2, axis=0)
+    dx2 = 1. /x.shape[0] * np.ones(x.shape) * dmu
+    dx = dx1 + dx2
+
+    x_hat = (x - sample_mean)/np.sqrt(sample_var+eps)
+    r = np.multiply(x_hat, dout)
+    dgamma = np.matmul(r.T, np.ones((x.shape[0],1))).reshape(1,-1)
+
+    dbeta = np.matmul(np.ones((1,x.shape[0])), dout)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################
@@ -305,7 +330,30 @@ def batchnorm_backward_alt(dout, cache):
     ###########################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    x, gamma, beta, bn_param, sample_mean, sample_var = cache
+    xmu = x-sample_mean
+    eps = bn_param.get('eps', 1e-5)
+    sqrtvar = np.sqrt(sample_var+eps)
+    ivar = 1/sqrtvar
+
+
+    dxhat = dout*gamma
+    divar = np.sum(dxhat*xmu, axis=0)
+    dxmu1 = dxhat*ivar
+    dsqrtvar = -1/(sample_var+eps)*divar	
+    dvar = 0.5 * 1. /np.sqrt(sample_var+eps) * dsqrtvar
+    dsq = 1. /x.shape[0] * np.ones(x.shape) * dvar
+    dxmu2 = 2 * xmu * dsq
+    dx1 = (dxmu1 + dxmu2)
+    dmu = -1 * np.sum(dxmu1+dxmu2, axis=0)
+    dx2 = 1. /x.shape[0] * np.ones(x.shape) * dmu
+    dx = dx1 + dx2
+
+    x_hat = (x - sample_mean)/np.sqrt(sample_var+eps)
+    r = np.multiply(x_hat, dout)
+    dgamma = np.matmul(r.T, np.ones((x.shape[0],1))).reshape(1,-1)
+
+    dbeta = np.matmul(np.ones((1,x.shape[0])), dout)
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
     ###########################################################################

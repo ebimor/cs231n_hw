@@ -1,7 +1,7 @@
 from builtins import range
 from builtins import object
 import numpy as np
- 
+
 from cs231n.layers import *
 from cs231n.layer_utils import *
 
@@ -200,11 +200,17 @@ class FullyConnectedNet(object):
         #pass
         self.params['W1'] = weight_scale*np.random.randn(input_dim,hidden_dims[0])
         self.params['b1'] = np.zeros(hidden_dims[0])
-        for i in range(len(hidden_dims)-1):
+        self.params['gamma1'] = np.ones(hidden_dims[0])
+        self.params['beta1'] = np.zeros(hidden_dims[0])
+        for i in range(len(hidden_dims)-2):
             self.params['W'+str(i+2)] = weight_scale*np.random.randn(hidden_dims[i],hidden_dims[i+1])
             self.params['b'+str(i+2)] = np.zeros(hidden_dims[i+1])
+            self.params['gamma'+str(i+2)] = np.ones(hidden_dims[i+1])
+            self.params['beta'+str(i+2)] = np.zeros(hidden_dims[i+1])
 
         N = len(hidden_dims)+1
+        self.params['W'+str(N-1)] = weight_scale*np.random.randn(hidden_dims[N-3],hidden_dims[N-2])
+        self.params['b'+str(N-1)] = np.zeros(hidden_dims[N-2])
         self.params['W'+str(N)] = weight_scale*np.random.randn(hidden_dims[N-2],num_classes)
         self.params['b'+str(N)] = np.zeros(num_classes)
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
@@ -271,13 +277,31 @@ class FullyConnectedNet(object):
         #pass
         N = self.num_layers-1 #=len(hidden_dims)
         Cache = []
-        out, cache= affine_relu_forward(X,self.params['W1'], self.params['b1'])
-        Cache.append(cache)
-        #scores, cache2 = affine_forward(out1, self.params['W2'], self.params['b2'])
 
-        for i in range(1,N+1):
-            out, cache = affine_forward(out, self.params['W'+str(i+1)], self.params['b'+str(i+1)])
+
+        #scores, cache2 = affine_forward(out1, self.params['W2'], self.params['b2'])
+        if self.normalization=='batchnorm':
+
+            out_afrel, cache_afrel= affine_relu_forward(X,self.params['W1'], self.params['b1'])
+            out, cache_btchn = batchnorm_forward(out_afrel, self.params['gamma1'], self.params['beta1'], self.bn_params[1])
+            cache=(cache_afrel, cache_btchn)
+
+            for i in range(1,N-1):
+                out_aff, cache_aff = affine_forward(out, self.params['W'+str(i+1)], self.params['b'+str(i+1)])
+                out, cache_btchn = batchnorm_forward(out_aff, self.params['gamma'+str(i+1)], self.params['beta'+str(i+1)], self.bn_params[i+1])
+                cache=(cache_aff, cache_btchn)
+                Cache.append(cache)
+
+            out, cache = affine_forward(out, self.params['W'+str(N)], self.params['b'+str(N)])
             Cache.append(cache)
+            out, cache = affine_forward(out, self.params['W'+str(N+1)], self.params['b'+str(N+1)])
+            Cache.append(cache)
+        else :
+            out, cache= affine_relu_forward(X,self.params['W1'], self.params['b1'])
+            Cache.append(cache)
+            for i in range(1,N+1):
+                out, cache = affine_forward(out, self.params['W'+str(i+1)], self.params['b'+str(i+1)])
+                Cache.append(cache)
 
         scores = out
 
@@ -310,13 +334,23 @@ class FullyConnectedNet(object):
         for i in range(N+1):
             loss += 0.5* self.reg * np.sum(self.params['W'+str(i+1)] * self.params['W'+str(i+1)])
 
-        for i in range(N):
-            dout, grads['W'+str(N+1-i)], grads['b'+str(N+1-i)] = affine_backward(dL, Cache[N-i])
-            grads['W'+str(N+1-i)] += self.reg*self.params['W'+str(N+1-i)]
-            dL = dout
+        if self.normalization=='batchnorm':
+            dout, grads['W'+str(N+1)], grads['b'+str(N+1)] = affine_backward(dL, Cache[N])
 
-        _, grads['W1'], grads['b1'] = affine_relu_backward(dL, Cache[0])
-        grads['W1'] += self.reg*self.params['W1']
+            for i in range(1,N):
+                d_batchnomr_out, grad
+                dout, grads['W'+str(N+1-i)], grads['b'+str(N+1-i)] = affine_backward(dL, Cache[N-i])
+                grads['W'+str(N+1-i)] += self.reg*self.params['W'+str(N+1-i)]
+                dL = dout
+
+        else:
+            for i in range(N):
+                dout, grads['W'+str(N+1-i)], grads['b'+str(N+1-i)] = affine_backward(dL, Cache[N-i])
+                grads['W'+str(N+1-i)] += self.reg*self.params['W'+str(N+1-i)]
+                dL = dout
+
+            _, grads['W1'], grads['b1'] = affine_relu_backward(dL, Cache[0])
+            grads['W1'] += self.reg*self.params['W1']
 
         # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
         ############################################################################
